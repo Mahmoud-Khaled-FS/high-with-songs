@@ -6,7 +6,9 @@ from audio import AudioFile
 
 
 def main(argv):
-    image = ImageFile("res/spider man.jpg")
+    image = ImageFile("res/image2.jpg")
+    image.set_size(2000, 2000)
+    image.add_logo("./logo.png")
     audio = AudioFile("res/audio.mp3")
     # audio.set_pos("00:01:57", "00:02:39")
     video_maker = VideoMaker(image=image, audio=audio)
