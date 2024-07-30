@@ -1,9 +1,8 @@
-import subprocess
-import numpy as np
 import os
 
 from image import ImageFile
 from audio import AudioFile
+from ffmpeg.ffmpeg import FFmpeg
 
 
 class VideoMaker:
@@ -17,6 +16,26 @@ class VideoMaker:
         self.audio = audio
 
     def build(self):
+        temp_image = self.image.create_temp_image()
+        ffmpeg = FFmpeg()
+        ffmpeg.add_global_option("-y")
+        audio_input = ffmpeg.add_input(self.audio.path)
+        ffmpeg.add_option(audio_input, "-ss", "00:10")
+        ffmpeg.add_option(audio_input, "-to", "00:30")
+        image_input = ffmpeg.add_input(temp_image)
+        ffmpeg.add_option(image_input, "-to", "00:30")
+        ffmpeg.add_option(image_input, "-loop", "1")
+        # width, height = self.image.get_size()
+        ffmpeg.add_output(
+            "res/out.mp4",
+            *FFmpeg.common_output_options,
+            # "-vf",
+            # f"scale='{width}:{height}',format=yuv420p",
+        )
+        ffmpeg.run()
+        # os.remove(path=temp_image)
+
+    def build_ffmpeg(self):
         init_command = [self.ffmpeg_command, "-y"]
 
         width, height = self.image.get_size()
@@ -32,7 +51,6 @@ class VideoMaker:
             "+faststart",
             "out.mp4",
         ]
-        temp_image_path = self.image.create_temp_image()
         command = (
             init_command
             + self.image_args_ffmpeg(temp_image_path)
@@ -40,9 +58,7 @@ class VideoMaker:
             + out_command
         )
         print(" ".join(command))
-        proc = subprocess.Popen(command, stderr=subprocess.PIPE)
-        proc.communicate()
-        os.remove(path=temp_image_path)
+        temp_image_path = self.image.create_temp_image()
 
     def image_args_ffmpeg(self, image_path: str) -> list[str]:
         return [
